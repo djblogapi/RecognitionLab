@@ -1,9 +1,14 @@
 import cv2
 import face_recognition
-cap = cv2.VideoCapture("/dev/video0")
+
+CAMERA_ID = "/dev/video0"
+
+cap = cv2.VideoCapture(CAMERA_ID)
 
 face_locations = []
-flag = True
+
+make_screenshot = True
+
 while True:
 	# Grab a single frame of video
 	ret, frame = cap.read()
@@ -12,16 +17,18 @@ while True:
 	rgb_frame = frame[:, :, ::-1]
 	# Find all the faces in the current frame of video
 	face_locations = face_recognition.face_locations(rgb_frame)
-	for top, right, bottom, left in face_locations:
-		# Draw a box around the face
-		cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
+	if face_locations:
+		# TODO send screen to web server (temporary make one screen and save it)
+		if make_screenshot:
+			cv2.imwrite("screenshot.jpeg", frame)
+			make_screenshot = False
+		for top, right, bottom, left in face_locations:
+			# Draw a box around the face
+			cv2.rectangle(frame, (left, top), (right, bottom), (159, 237, 164), 2)
 
 	# Display the resulting image
 	cv2.imshow('Video', frame)
-	if flag:
-		cv2.imwrite("test.jpg", frame)
-		flag = False
+
 	# Wait for Enter key to stop
 	if cv2.waitKey(25) == 13:
 		break
-
