@@ -1,13 +1,14 @@
 from datetime import datetime, timedelta
-
+import json
 import cv2
 import face_recognition
 import requests
-
+from mqtt import client
 # setup camera id
 CAMERA_ID = "/dev/video0"
 
-cap = cv2.VideoCapture(CAMERA_ID)
+# cap = cv2.VideoCapture(CAMERA_ID)
+cap = cv2.VideoCapture('video.mp4')
 
 # Setup api url for requests
 URL = "http://localhost/v1/users/file/"
@@ -29,6 +30,16 @@ while True:
             if screenshot_timestamp < datetime.now():
                 screenshot_timestamp = datetime.now() + timedelta(seconds=5)
                 imencoded = cv2.imencode(".jpg", frame)[1]
+                # send data to mqtt
+                face_locations = face_recognition.face_locations(frame)
+                face_encodings = face_recognition.face_encodings(frame, face_locations)
+                # raise Exception(type(face_encodings))
+                # Loop through each face found in the image
+                for i, face_encoding in enumerate(face_encodings):
+                    # Convert face encoding to bytes for database storage
+                    message = list(face_encoding)
+                    client.publish('face_recognition', json.dumps(message))
+                # send image to django app
                 data = {'image': ('face.jpg', imencoded.tobytes(), 'image/jpeg')}
                 try:
                     resp = requests.post(URL, files=data)
